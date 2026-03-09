@@ -4,17 +4,27 @@ import com.unilopers.cinema.model.Usuario;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
 
+import jakarta.annotation.PostConstruct;
 import java.security.Key;
 import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
 
-    private final String secret = "CHAVE987654321012345678901234567890";
-    private final long validadeEmMilissegundos = 1000 * 60 * 60;
+    @Value("${jwt.secret}")
+    private String secret;
 
-    private final Key key = Keys.hmacShaKeyFor(secret.getBytes());
+    @Value("${jwt.expiration}")
+    private long validadeEmMilissegundos;
+
+    private Key key;
+
+    @PostConstruct
+    public void init() {
+        this.key = Keys.hmacShaKeyFor(secret.getBytes());
+    }
 
     public String gerarToken(Usuario usuario) {
 
