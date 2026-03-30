@@ -17,6 +17,9 @@ public class Sala {
     @Column(name = "capacidade")
     private Integer capacidade;
 
+    @Column(name = "disponivel")
+    private Boolean disponivel = true;
+
     public Sala() {}
 
     public Sala(String nome, Integer capacidade) {
@@ -25,32 +28,34 @@ public class Sala {
     }
 
     public Long getId() {
-
         return id;
     }
 
     public void setId(Long id) {
-
         this.id = id;
     }
 
     public String getNome() {
-
         return nome;
     }
 
     public void setNome(String nome) {
-
         this.nome = nome;
     }
 
     public Integer getCapacidade() {
-
         return capacidade;
     }
 
     public void setCapacidade(Integer capacidade) {
-
         this.capacidade = capacidade;
+    }
+
+    public Boolean getDisponivel() {
+        return disponivel;
+    }
+
+    public void setDisponivel(Boolean disponivel) {
+        this.disponivel = disponivel;
     }
 }
