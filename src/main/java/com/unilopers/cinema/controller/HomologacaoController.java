@@ -27,6 +27,8 @@ public class HomologacaoController {
 
     @Autowired
     private HomologacaoRepository homologacaoRepository;
+
+    @Autowired
     private HomologacaoAsyncService homologacaoAsyncService;
 
     @Autowired
@@ -51,7 +53,6 @@ public class HomologacaoController {
             }
 
             String requisito = dto.getRequisitoTecnico() != null ? dto.getRequisitoTecnico() : "2D";
-            String status = dto.getStatusValidacao() != null ? dto.getStatusValidacao() : "Aprovado";
 
             Homologacao homologacao = new Homologacao(filme.get(), sala.get(), requisito, "Pendente");
             Homologacao saved = homologacaoRepository.save(homologacao);
