@@ -24,6 +24,9 @@ public class SalaController {
     @Autowired
     private SalaMapper salaMapper;
 
+    @Autowired
+    private com.unilopers.cinema.service.AsyncService asyncService;
+
     @GetMapping
     public List<SalaDTO> list() {
         return salaMapper.toDTOList(salaRepository.findAll());
@@ -46,6 +49,9 @@ public class SalaController {
 
         Sala sala = salaMapper.toEntity(dto);
         Sala saved = salaRepository.save(sala);
+
+        // Disparo Assíncrono para preparação da sala
+        asyncService.prepararSalaTecnica(saved.getId(), saved.getNome());
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")

@@ -24,6 +24,9 @@ public class GeneroController {
     @Autowired
     private GeneroMapper generoMapper;
 
+    @Autowired
+    private com.unilopers.cinema.service.AsyncService asyncService;
+
     @GetMapping
     public List<GeneroDTO> list() {
         return generoMapper.toDTOList(generoRepository.findAll());
@@ -46,6 +49,9 @@ public class GeneroController {
 
         Genero genero = generoMapper.toEntity(dto);
         Genero saved = generoRepository.save(genero);
+
+        // Disparo Assíncrono para sincronização externa
+        asyncService.sincronizarGeneroExterno(saved.getId(), saved.getNome());
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
