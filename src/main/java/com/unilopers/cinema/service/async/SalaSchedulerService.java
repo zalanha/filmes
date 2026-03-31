@@ -27,43 +27,57 @@ public class SalaSchedulerService {
 
     /**
      * Nicholas Gabriel: Atualização automática de disponibilidade de Sala.
-     * Roda a cada 1 minuto para verificar ocupação física.
+     * Roda a cada 1 minuto (cron = "0 * * * * *").
      */
     @Scheduled(cron = "0 * * * * *")
     @Transactional
     public void verificarOcupacaoDasSalas() {
-        logger.info("[CRON-SALA] Iniciando verificação de disponibilidade...");
+        logger.info("[CRON-SALA] Iniciando ciclo de verificação de disponibilidade...");
         
         LocalDateTime agora = LocalDateTime.now();
         List<Sala> todasAsSalas = salaRepository.findAll();
         List<Sessao> sessoesAtivas = sessaoRepository.findAll();
 
         for (Sala sala : todasAsSalas) {
-            boolean estaOcupada = false;
-            String filmeEmExibicao = "";
+            boolean estaOcupadaAgora = false;
+            String filmeAtual = "";
 
             for (Sessao sessao : sessoesAtivas) {
+                // Blindagem contra dados incompletos
+                if (sessao.getSala() == null || sessao.getFilme() == null || sessao.getDataHora() == null) {
+                    continue;
+                }
+
                 if (sessao.getSala().getId().equals(sala.getId())) {
                     LocalDateTime inicio = sessao.getDataHora();
-                    LocalDateTime fim = inicio.plusMinutes(sessao.getFilme().getDuracaoMin());
+                    Integer duracao = sessao.getFilme().getDuracaoMin();
+                    if (duracao == null) duracao = 120; // Padrão 2 horas
+
+                    LocalDateTime fim = inicio.plusMinutes(duracao);
 
                     if (agora.isAfter(inicio) && agora.isBefore(fim)) {
-                        estaOcupada = true;
-                        filmeEmExibicao = sessao.getFilme().getTitulo();
+                        estaOcupadaAgora = true;
+                        filmeAtual = sessao.getFilme().getTitulo();
                         break;
                     }
                 }
             }
 
-            // Atualiza apenas se houver mudança de estado para otimizar performance
-            if (sala.getDisponivel() == estaOcupada) {
-                sala.setDisponivel(!estaOcupada);
+            // Otimização: Só grava no banco se o status mudou
+            // Se estaOcupadaAgora for true, entao disponivel deve ser false
+            boolean novoStatusDisponivel = !estaOcupadaAgora;
+            
+            // Tratamento para evitar NullPointer no campo da entidade
+            boolean statusAtual = (sala.getDisponivel() != null) ? sala.getDisponivel() : true;
+
+            if (statusAtual != novoStatusDisponivel) {
+                sala.setDisponivel(novoStatusDisponivel);
                 salaRepository.save(sala);
                 
-                if (estaOcupada) {
-                    logger.info("[CRON-SALA] STATUS ALTERADO: Sala '{}' ocupada pelo filme '{}'.", sala.getNome(), filmeEmExibicao);
+                if (estaOcupadaAgora) {
+                    logger.info("[CRON-SALA] Sala '{}' Ocupada (Filme: '{}')", sala.getNome(), filmeAtual);
                 } else {
-                    logger.info("[CRON-SALA] STATUS ALTERADO: Sala '{}' agora está livre.", sala.getNome());
+                    logger.info("[CRON-SALA] Sala '{}' Liberada (Disponível)", sala.getNome());
                 }
             }
         }
